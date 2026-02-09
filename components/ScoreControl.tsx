@@ -45,9 +45,9 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
   if (!isAdmin && !isTeamCoach) return null;
 
   return (
-    <div className={`bg-vnl-panel/90 backdrop-blur p-5 rounded border shadow-xl transition-all duration-300 ${isServing ? 'border-yellow-400/50 shadow-[0_0_15px_rgba(250,204,21,0.1)]' : 'border-white/10'} ${disabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+    <div className={`bg-vnl-panel/90 backdrop-blur p-3 md:p-5 rounded border shadow-xl transition-all duration-300 ${isServing ? 'border-yellow-400/50 shadow-[0_0_15px_rgba(250,204,21,0.1)]' : 'border-white/10'} ${disabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
       <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* Manual Serve Toggle Button */}
             <button 
                 onClick={() => isAdmin && onSetServe(teamId)}
@@ -58,12 +58,12 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
                 🏐
             </button>
             
-            <h3 className={`font-bold text-lg uppercase tracking-wider ${isServing ? 'text-yellow-400' : 'text-white'}`}>{teamName}</h3>
+            <h3 className={`font-bold text-base md:text-lg uppercase tracking-wider truncate max-w-[150px] md:max-w-none ${isServing ? 'text-yellow-400' : 'text-white'}`}>{teamName}</h3>
             
             {isAdmin && onSubtractPoint && !disabled && (
               <button 
                 onClick={() => onSubtractPoint(teamId)}
-                className="bg-red-900/30 hover:bg-red-800 text-red-400 w-6 h-6 rounded flex items-center justify-center text-xs font-bold border border-red-500/20 transition ml-2"
+                className="bg-red-900/30 hover:bg-red-800 text-red-400 w-8 h-8 md:w-6 md:h-6 rounded flex items-center justify-center text-xs font-bold border border-red-500/20 transition ml-1"
                 title="Restar Punto"
               >
                 -1
@@ -73,7 +73,7 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
           {(isAdmin || isTeamCoach) && (
               <button 
                 onClick={() => onModifyRotation(teamId)}
-                className="text-[10px] bg-white/10 hover:bg-white/20 text-slate-300 px-3 py-1 rounded border border-white/10 transition uppercase font-bold tracking-wider"
+                className="text-[10px] bg-white/10 hover:bg-white/20 text-slate-300 px-3 py-2 md:py-1 rounded border border-white/10 transition uppercase font-bold tracking-wider"
                 disabled={disabled}
               >
                 Rotación
@@ -82,12 +82,12 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
       </div>
       
       {isAdmin ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Quick Point Button */}
           <button 
             onClick={() => onPoint(teamId, 'opponent_error')}
             disabled={disabled}
-            className="w-full bg-corp-accent hover:bg-corp-accent-hover text-white py-4 rounded-lg font-black text-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-corp-accent hover:bg-corp-accent-hover text-white py-4 md:py-4 rounded-lg font-black text-lg md:text-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 mb-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             <span className="text-2xl">+</span> PUNTO DIRECTO
           </button>
@@ -96,28 +96,28 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
              <button 
                 onClick={() => setSelectedAction('attack')}
                 disabled={disabled}
-                className={`p-3 rounded text-sm font-black uppercase tracking-wider transition border-l-4 ${selectedAction === 'attack' ? 'bg-white text-black border-vnl-accent' : 'bg-black/40 text-slate-300 border-transparent hover:bg-black/60'}`}
+                className={`p-4 md:p-3 rounded text-sm font-black uppercase tracking-wider transition border-l-4 touch-manipulation ${selectedAction === 'attack' ? 'bg-white text-black border-vnl-accent' : 'bg-black/40 text-slate-300 border-transparent hover:bg-black/60'}`}
              >
                Ataque
              </button>
              <button 
                 onClick={() => setSelectedAction('block')}
                 disabled={disabled}
-                className={`p-3 rounded text-sm font-black uppercase tracking-wider transition border-l-4 ${selectedAction === 'block' ? 'bg-white text-black border-blue-500' : 'bg-black/40 text-slate-300 border-transparent hover:bg-black/60'}`}
+                className={`p-4 md:p-3 rounded text-sm font-black uppercase tracking-wider transition border-l-4 touch-manipulation ${selectedAction === 'block' ? 'bg-white text-black border-blue-500' : 'bg-black/40 text-slate-300 border-transparent hover:bg-black/60'}`}
              >
                Bloqueo
              </button>
              <button 
                 onClick={() => setSelectedAction('ace')}
                 disabled={disabled}
-                className={`p-3 rounded text-sm font-black uppercase tracking-wider transition border-l-4 ${selectedAction === 'ace' ? 'bg-white text-black border-green-500' : 'bg-black/40 text-slate-300 border-transparent hover:bg-black/60'}`}
+                className={`p-4 md:p-3 rounded text-sm font-black uppercase tracking-wider transition border-l-4 touch-manipulation ${selectedAction === 'ace' ? 'bg-white text-black border-green-500' : 'bg-black/40 text-slate-300 border-transparent hover:bg-black/60'}`}
              >
                Ace
              </button>
              <button 
                 onClick={() => onPoint(teamId, 'opponent_error')}
                 disabled={disabled}
-                className="p-3 rounded text-sm font-black uppercase tracking-wider bg-red-900/50 text-red-200 border-l-4 border-red-500 hover:bg-red-900/80 transition"
+                className="p-4 md:p-3 rounded text-sm font-black uppercase tracking-wider bg-red-900/50 text-red-200 border-l-4 border-red-500 hover:bg-red-900/80 transition touch-manipulation"
              >
                Error Rival
              </button>
@@ -127,25 +127,25 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
           <div className="flex gap-2 border-t border-white/10 pt-4">
               <button 
                 onClick={() => setSelectedAction('yellow_card')}
-                className={`flex-1 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 border border-yellow-500/50 p-2 rounded text-[10px] font-black uppercase tracking-widest transition ${selectedAction === 'yellow_card' ? 'bg-yellow-500 text-black' : ''}`}
+                className={`flex-1 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 border border-yellow-500/50 p-3 md:p-2 rounded text-[10px] font-black uppercase tracking-widest transition touch-manipulation ${selectedAction === 'yellow_card' ? 'bg-yellow-500 text-black' : ''}`}
               >
                   🟨 Amarilla
               </button>
               <button 
                 onClick={() => setSelectedAction('red_card')}
-                className={`flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/50 p-2 rounded text-[10px] font-black uppercase tracking-widest transition ${selectedAction === 'red_card' ? 'bg-red-600 text-white' : ''}`}
+                className={`flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/50 p-3 md:p-2 rounded text-[10px] font-black uppercase tracking-widest transition touch-manipulation ${selectedAction === 'red_card' ? 'bg-red-600 text-white' : ''}`}
               >
                   🟥 Roja (+1)
               </button>
           </div>
 
           {selectedAction && (
-            <div className="bg-black/40 p-3 rounded border border-white/10 animate-in fade-in slide-in-from-top-2">
+            <div className="bg-black/60 backdrop-blur-md p-4 rounded border border-white/10 animate-in fade-in slide-in-from-top-2 fixed inset-x-4 bottom-24 z-50 md:static md:bg-black/40 md:p-3 shadow-2xl md:shadow-none">
               <div className="flex justify-between items-center mb-3">
-                <p className="text-[10px] text-vnl-accent uppercase tracking-widest font-bold">Seleccionar Jugador</p>
-                <button onClick={() => setSelectedAction(null)} className="text-[10px] text-slate-500 font-bold uppercase">Cancelar</button>
+                <p className="text-xs text-vnl-accent uppercase tracking-widest font-bold">Seleccionar Jugador</p>
+                <button onClick={() => setSelectedAction(null)} className="text-xs text-white bg-slate-700 px-3 py-1 rounded font-bold uppercase">Cancelar</button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 md:grid-cols-3 gap-2">
                 {players.map(p => (
                   <button
                     key={p.id}
@@ -153,7 +153,7 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
                       onPoint(teamId, selectedAction, p.id);
                       setSelectedAction(null);
                     }}
-                    className="bg-white/5 border border-white/10 hover:bg-vnl-accent hover:text-black hover:border-vnl-accent text-white font-black py-2 rounded transition"
+                    className="bg-white/10 border border-white/10 hover:bg-vnl-accent hover:text-black hover:border-vnl-accent text-white font-black py-4 md:py-2 rounded transition text-lg md:text-base touch-manipulation"
                   >
                     #{p.number}
                   </button>
@@ -174,7 +174,7 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
         <button
           onClick={() => onRequestTimeout(teamId)}
           disabled={disabled || timeoutsUsed >= 2}
-          className="bg-yellow-600/80 hover:bg-yellow-500 disabled:opacity-30 disabled:grayscale text-white py-3 rounded text-sm font-black uppercase tracking-wider flex flex-col items-center shadow-lg transition"
+          className="bg-yellow-600/80 hover:bg-yellow-500 disabled:opacity-30 disabled:grayscale text-white py-3 rounded text-sm font-black uppercase tracking-wider flex flex-col items-center shadow-lg transition touch-manipulation"
         >
           <span>TIEMPO</span>
           <span className="text-[9px] font-normal opacity-90 mt-1">{timeoutsUsed}/2</span>
@@ -182,7 +182,7 @@ export const ScoreControl: React.FC<ScoreControlProps> = ({
         <button
           onClick={() => onRequestSub(teamId)}
           disabled={disabled || subsUsed >= 6}
-          className="bg-blue-600/80 hover:bg-blue-500 disabled:opacity-30 disabled:grayscale text-white py-3 rounded text-sm font-black uppercase tracking-wider flex flex-col items-center shadow-lg transition"
+          className="bg-blue-600/80 hover:bg-blue-500 disabled:opacity-30 disabled:grayscale text-white py-3 rounded text-sm font-black uppercase tracking-wider flex flex-col items-center shadow-lg transition touch-manipulation"
         >
           <span>CAMBIO</span>
           <span className="text-[9px] font-normal opacity-90 mt-1">{subsUsed}/6</span>

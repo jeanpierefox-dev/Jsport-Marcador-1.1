@@ -6,6 +6,16 @@ interface TopPlayersProps {
   tournament: Tournament;
 }
 
+const MetricCard = ({ label, metric, icon, isActive, onClick }: { label: string, metric: string, icon: string, isActive: boolean, onClick: () => void }) => (
+  <button 
+    onClick={onClick}
+    className={`flex-1 p-3 rounded-lg border flex flex-col items-center gap-1 transition ${isActive ? 'bg-corp-accent text-white border-corp-accent' : 'bg-black/20 text-slate-400 border-white/10 hover:bg-white/5'}`}
+  >
+      <span className="text-xl">{icon}</span>
+      <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+  </button>
+);
+
 export const TopPlayers: React.FC<TopPlayersProps> = ({ tournament }) => {
   const [filterRole, setFilterRole] = useState<PlayerRole | 'ALL'>('ALL');
   const [sortMetric, setSortMetric] = useState<'points' | 'blocks' | 'aces' | 'mvps'>('points');
@@ -19,17 +29,7 @@ export const TopPlayers: React.FC<TopPlayersProps> = ({ tournament }) => {
   const filteredPlayers = allPlayers.filter(p => filterRole === 'ALL' || p.role === filterRole);
 
   // Sort
-  const sortedPlayers = filteredPlayers.sort((a, b) => b.stats[sortMetric] - a.stats[sortMetric]).slice(0, 10);
-
-  const MetricCard = ({ label, metric, icon }: { label: string, metric: typeof sortMetric, icon: string }) => (
-      <button 
-        onClick={() => setSortMetric(metric)}
-        className={`flex-1 p-3 rounded-lg border flex flex-col items-center gap-1 transition ${sortMetric === metric ? 'bg-corp-accent text-white border-corp-accent' : 'bg-black/20 text-slate-400 border-white/10 hover:bg-white/5'}`}
-      >
-          <span className="text-xl">{icon}</span>
-          <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
-      </button>
-  );
+  const sortedPlayers = filteredPlayers.sort((a, b) => (b.stats[sortMetric] || 0) - (a.stats[sortMetric] || 0)).slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -42,10 +42,10 @@ export const TopPlayers: React.FC<TopPlayersProps> = ({ tournament }) => {
                  ))}
              </div>
              <div className="flex gap-2 w-full md:w-auto">
-                 <MetricCard label="Puntos" metric="points" icon="🏐" />
-                 <MetricCard label="Bloqueos" metric="blocks" icon="✋" />
-                 <MetricCard label="Aces" metric="aces" icon="⚡" />
-                 <MetricCard label="MVP" metric="mvps" icon="⭐" />
+                 <MetricCard label="Puntos" metric="points" icon="🏐" isActive={sortMetric === 'points'} onClick={() => setSortMetric('points')} />
+                 <MetricCard label="Bloqueos" metric="blocks" icon="✋" isActive={sortMetric === 'blocks'} onClick={() => setSortMetric('blocks')} />
+                 <MetricCard label="Aces" metric="aces" icon="⚡" isActive={sortMetric === 'aces'} onClick={() => setSortMetric('aces')} />
+                 <MetricCard label="MVP" metric="mvps" icon="⭐" isActive={sortMetric === 'mvps'} onClick={() => setSortMetric('mvps')} />
              </div>
         </div>
 

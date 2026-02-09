@@ -1,0 +1,22 @@
+
+{
+  "name": "JSport Braccini",
+  "short_name": "JSport",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192.png?text=JSport+192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512.png?text=JSport+512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

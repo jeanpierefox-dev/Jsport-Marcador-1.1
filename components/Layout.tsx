@@ -12,13 +12,13 @@ interface LayoutProps {
   onOpenCloudConfig: () => void;
 }
 
-// Corporate Hexagon Logo with stylized "J"
+// Corporate Hexagon Logo with stylized "J" - Updated for Corporate Blue
 const AppLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={`${className}`} xmlns="http://www.w3.org/2000/svg">
      <defs>
         <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#60a5fa" />
-            <stop offset="100%" stopColor="#2563eb" />
+            <stop offset="0%" stopColor="#2563eb" /> {/* Royal Blue */}
+            <stop offset="100%" stopColor="#1e40af" /> {/* Darker Blue */}
         </linearGradient>
      </defs>
      {/* Shield/Hexagon Base */}
@@ -54,7 +54,7 @@ export const Layout: React.FC<LayoutProps> = ({
             >
                 <div className={`mb-1 transition-transform ${isActive ? 'scale-110 text-corp-accent' : ''}`}>{icon}</div>
                 <span className={`text-[10px] font-medium tracking-wide ${isActive ? 'font-bold' : ''}`}>{label}</span>
-                {isActive && <div className="absolute top-0 w-12 h-0.5 bg-corp-accent shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>}
+                {isActive && <div className="absolute top-0 w-12 h-0.5 bg-corp-accent shadow-[0_0_8px_rgba(37,99,235,0.8)]"></div>}
             </button>
         );
     }
@@ -64,8 +64,8 @@ export const Layout: React.FC<LayoutProps> = ({
           onClick={() => onNavigate(view)}
           className={`relative flex items-center gap-2 px-4 py-2 rounded-md transition-all font-medium text-sm ${
             isActive 
-              ? 'bg-corp-accent text-white shadow-md' 
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
+              ? 'bg-corp-accent text-white shadow-lg shadow-blue-900/50' 
+              : 'text-slate-300 hover:text-white hover:bg-white/5'
           }`}
         >
           <span className="text-lg">{icon}</span>
@@ -86,20 +86,21 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-corp-bg flex flex-col font-sans text-slate-100 selection:bg-corp-accent selection:text-white">
+    // Use 100dvh for proper mobile browser height
+    <div className="min-h-[100dvh] bg-corp-bg flex flex-col font-sans text-slate-100 selection:bg-corp-accent selection:text-white">
       
       {/* --- DESKTOP TOP BAR --- */}
-      <header className="bg-corp-panel/80 border-b border-white/5 sticky top-0 z-50 backdrop-blur-md h-16">
-        <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
+      <header className="bg-corp-panel/90 border-b border-blue-900/30 sticky top-0 z-50 backdrop-blur-md h-14 md:h-16 pt-[env(safe-area-inset-top)] shadow-md">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-full flex justify-between items-center">
             
             {/* Brand */}
-            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
-              <div className="bg-white/5 p-1 rounded-lg group-hover:bg-white/10 transition duration-300">
-                  <AppLogo className="w-8 h-8" />
+            <div className="flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => onNavigate('home')}>
+              <div className="bg-blue-500/10 p-1.5 rounded-lg group-hover:bg-blue-500/20 transition duration-300 border border-blue-500/10">
+                  <AppLogo className="w-6 h-6 md:w-8 md:h-8" />
               </div>
               <div className="flex flex-col justify-center">
-                <h1 className="text-lg font-bold tracking-tight text-white leading-none">JSPORT <span className="text-corp-accent">BRACCINI</span></h1>
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-widest leading-none mt-1">Management Suite</span>
+                <h1 className="text-base md:text-lg font-bold tracking-tight text-white leading-none">JSPORT <span className="text-corp-accent">BRACCINI</span></h1>
+                <span className="hidden md:block text-[10px] text-slate-400 font-medium uppercase tracking-widest leading-none mt-1">Management Suite</span>
               </div>
             </div>
 
@@ -112,34 +113,34 @@ export const Layout: React.FC<LayoutProps> = ({
             </nav>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-4 ml-auto">
+            <div className="flex items-center gap-3 md:gap-4 ml-auto">
                {/* Cloud Indicator */}
                {isAdmin && (
                    <button 
                      onClick={onOpenCloudConfig}
-                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition ${
+                     className={`flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition ${
                          isCloudConnected 
-                         ? 'border-green-500/20 bg-green-500/10 text-green-400' 
-                         : 'border-red-500/20 bg-red-500/10 text-red-400'
+                         ? 'border-green-500/30 bg-green-500/10 text-green-400' 
+                         : 'border-red-500/30 bg-red-500/10 text-red-400'
                      }`}
                    >
                       <div className={`w-1.5 h-1.5 rounded-full ${isCloudConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="hidden sm:inline">{isCloudConnected ? 'SYNC ON' : 'OFFLINE'}</span>
+                      <span className="hidden sm:inline">{isCloudConnected ? 'ONLINE' : 'OFFLINE'}</span>
                    </button>
                )}
 
                {/* Profile Dropdown Simulation */}
-               <div className="flex items-center gap-3 pl-4 border-l border-white/5">
+               <div className="flex items-center gap-2 md:gap-3 pl-3 md:pl-4 border-l border-white/10">
                    <div className="text-right hidden sm:block">
                        <div className="text-xs font-semibold text-white">{currentUser.username}</div>
-                       <div className="text-[10px] text-slate-500 capitalize">{currentUser.role.toLowerCase().replace('_', ' ')}</div>
+                       <div className="text-[10px] text-slate-400 capitalize">{currentUser.role.toLowerCase().replace('_', ' ')}</div>
                    </div>
-                   <div className="w-8 h-8 bg-corp-accent rounded-full flex items-center justify-center font-bold text-xs text-white shadow-lg ring-2 ring-corp-bg cursor-pointer hover:ring-corp-accent/50 transition">
+                   <div className="w-7 h-7 md:w-8 md:h-8 bg-corp-accent rounded-full flex items-center justify-center font-bold text-xs text-white shadow-lg shadow-blue-500/30 ring-2 ring-corp-bg cursor-pointer hover:ring-corp-accent/50 transition">
                        {currentUser.username[0].toUpperCase()}
                    </div>
                    <button 
                      onClick={onLogout} 
-                     className="text-slate-500 hover:text-white transition ml-2"
+                     className="text-slate-400 hover:text-white transition ml-1 md:ml-2"
                      title="Cerrar Sesión"
                    >
                       {Icons.Logout}
@@ -150,13 +151,14 @@ export const Layout: React.FC<LayoutProps> = ({
       </header>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full relative z-10 pb-24 md:pb-8">
+      <main className="flex-grow p-3 md:p-8 max-w-7xl mx-auto w-full relative z-10 pb-28 md:pb-8">
         {children}
       </main>
 
       {/* --- MOBILE BOTTOM BAR (iOS Style) --- */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-corp-panel/95 backdrop-blur-xl border-t border-white/5 z-[100] pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
-          <div className="flex justify-around items-center px-2">
+      {/* Uses pb-safe-bottom which maps to env(safe-area-inset-bottom) configured in index.html */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-corp-panel/95 backdrop-blur-xl border-t border-blue-900/30 z-[100] pb-safe-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
+          <div className="flex justify-around items-center px-1">
                <NavItem isMobile view="home" label="Inicio" icon={Icons.Home} />
                <NavItem isMobile view="lobby" label="Torneos" icon={Icons.Trophy} />
                <NavItem isMobile view="teams" label="Equipos" icon={Icons.Users} />

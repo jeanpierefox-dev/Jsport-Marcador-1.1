@@ -1,17 +1,18 @@
 
-import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { Team, MatchFixture, Player } from "../types";
+import { GoogleGenAI, Type } from "@google/genai";
+import { Team } from "../types";
 
-// Safely retrieve API Key without crashing if process is not defined in browser
+// Safely retrieve API Key. 
+// Vite replaces process.env.API_KEY with the actual string value during build due to `define` in vite.config.ts
 const getApiKey = () => {
   try {
     // @ts-ignore
-    if (typeof process !== 'undefined' && process.env) {
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
       // @ts-ignore
-      return process.env.API_KEY || '';
+      return process.env.API_KEY;
     }
   } catch (e) {
-    // Ignore error in browser environments where process is undefined
+    // Ignore error
   }
   return '';
 };
