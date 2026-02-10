@@ -94,6 +94,7 @@ export interface MatchFixture {
   status: 'scheduled' | 'live' | 'finished';
   winnerId?: string;
   resultString?: string; // "3-1"
+  savedSets?: MatchSet[]; // Added to persist set history
 }
 
 export interface MatchConfig {

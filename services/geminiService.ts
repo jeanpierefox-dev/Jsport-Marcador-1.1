@@ -142,16 +142,22 @@ export const generateBasicFixture = (teams: Team[], startDate: string, endDate: 
   
   // 1. Calculate available dates correctly using UTC to avoid timezone shifts
   const dates: string[] = [];
-  // Ensure valid date objects
-  const start = isNaN(new Date(startDate).getTime()) ? new Date() : new Date(startDate); 
-  const end = isNaN(new Date(endDate).getTime()) ? new Date(start.getTime() + 86400000 * 30) : new Date(endDate);
+  
+  // Ensure valid date objects, fallback to today if invalid
+  let start = new Date(startDate);
+  if (isNaN(start.getTime())) start = new Date();
+  
+  let end = new Date(endDate);
+  if (isNaN(end.getTime())) end = new Date(start.getTime() + 86400000 * 30); // Default 30 days
   
   // Mapping Spanish days to JS getUTCDay() (0=Sunday, 1=Monday...)
   const dayMap: Record<string, number> = {
       'Domingo': 0, 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6
   };
   
-  const allowedDayIndices = matchDays.length > 0 ? matchDays.map(d => dayMap[d]).filter(d => d !== undefined) : null;
+  const allowedDayIndices = matchDays && matchDays.length > 0 
+      ? matchDays.map(d => dayMap[d]).filter(d => d !== undefined) 
+      : null;
 
   let current = new Date(start);
   let safetyCounter = 0;
@@ -163,12 +169,13 @@ export const generateBasicFixture = (teams: Team[], startDate: string, endDate: 
       if (!allowedDayIndices || allowedDayIndices.length === 0 || allowedDayIndices.includes(dayIndex)) {
           dates.push(current.toISOString().split('T')[0]);
       }
-      current.setUTCDate(current.getUTCDate() + 1);
+      // Add 1 day
+      current = new Date(current.getTime() + 86400000);
       safetyCounter++;
   }
   
   // If no matching dates found (e.g. range too short or no match), fallback to start date to ensure fixture isn't empty
-  if (dates.length === 0) dates.push(startDate);
+  if (dates.length === 0) dates.push(start.toISOString().split('T')[0]);
 
   // 2. Generate Matches (Round Robin logic)
   const generateGroupFixtures = (groupTeams: Team[], groupName: string) => {
