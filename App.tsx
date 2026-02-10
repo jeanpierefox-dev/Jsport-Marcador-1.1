@@ -976,6 +976,7 @@ export const App: React.FC = () => {
                     showStatsOverlay={showStatsOnTV} 
                     showScoreboard={showScoreboardOnTV} 
                     isCloudConnected={isCloudConnected} 
+                    onEndMatch={handleEndBroadcast}
                   />;
       }
       return <div className="fixed inset-0 bg-black text-white flex items-center justify-center">Error: Datos de equipo no encontrados.</div>;
