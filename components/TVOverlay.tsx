@@ -143,7 +143,7 @@ export const TVOverlay: React.FC<TVOverlayProps> = ({
   tournamentStats,
   showStatsOverlay = false,
   showScoreboard = true, 
-  showMiniScore = true,
+  showMiniScore = false, // Defaulted to false
   isCloudConnected = true
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -151,7 +151,7 @@ export const TVOverlay: React.FC<TVOverlayProps> = ({
   
   // Safe Default for Display Mode to prevent crash
   const defaultDisplayMode = {
-    showMiniScore: true,
+    showMiniScore: false,
     showFullScoreboard: true,
     showRotationA: false,
     showRotationB: false,
@@ -283,50 +283,6 @@ export const TVOverlay: React.FC<TVOverlayProps> = ({
       >
           ✕
       </button>
-
-      {/* --- VNL SCORE BUG (TOP LEFT) --- */}
-      {displayMode.showMiniScore && !isPreMatch && (
-          <div className="absolute top-6 left-6 z-40 flex items-stretch animate-in slide-in-from-left-4 drop-shadow-2xl">
-              {/* Tournament/Logo Box */}
-              <div className="bg-[#001b3d] w-14 flex items-center justify-center border-r border-[#ffffff20] rounded-l-md">
-                  {tournament?.logoUrl ? <img src={tournament.logoUrl} className="h-8 w-8 object-contain" /> : <VNLLogo className="h-10 w-10" />}
-              </div>
-              
-              {/* Main Score Area */}
-              <div className="flex bg-[#041e42]/95 backdrop-blur text-white h-14">
-                  {/* Team A */}
-                  <div className="px-4 flex items-center gap-3 border-r border-white/10 min-w-[120px] justify-between relative overflow-hidden group">
-                      {match.servingTeamId === teamA.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ffca05] animate-pulse"></div>}
-                      <span className="text-lg font-black uppercase tracking-tighter italic">{teamA.name.substring(0,3)}</span>
-                      <div className="flex flex-col items-end">
-                          <span className={`text-3xl font-black leading-none ${match.servingTeamId === teamA.id ? 'text-[#ffca05]' : 'text-white'}`}>{match.scoreA}</span>
-                          <div className="flex gap-0.5 mt-0.5">
-                              {Array.from({length: winsA}).map((_,i) => <div key={i} className="w-1.5 h-1.5 bg-[#ffca05] rounded-full"></div>)}
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Set Indicator */}
-                  <div className="w-16 flex flex-col items-center justify-center bg-[#000d26] border-x border-[#ffffff10]">
-                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">SET</span>
-                      <span className="text-xl font-black text-[#00b5e2]">{match.currentSet}</span>
-                  </div>
-
-                  {/* Team B */}
-                  <div className="px-4 flex items-center gap-3 border-l border-white/10 min-w-[120px] justify-between flex-row-reverse relative overflow-hidden">
-                      {match.servingTeamId === teamB.id && <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#ffca05] animate-pulse"></div>}
-                      <span className="text-lg font-black uppercase tracking-tighter italic">{teamB.name.substring(0,3)}</span>
-                      <div className="flex flex-col items-start">
-                          <span className={`text-3xl font-black leading-none ${match.servingTeamId === teamB.id ? 'text-[#ffca05]' : 'text-white'}`}>{match.scoreB}</span>
-                          <div className="flex gap-0.5 mt-0.5">
-                              {Array.from({length: winsB}).map((_,i) => <div key={i} className="w-1.5 h-1.5 bg-[#ffca05] rounded-full"></div>)}
-                          </div>
-                      </div>
-                  </div>
-              </div>
-              <div className="w-1 bg-[#b4a968] rounded-r-md"></div>
-          </div>
-      )}
 
       {/* --- VNL BOTTOM BAR (Full Scoreboard) --- */}
       {displayMode.showFullScoreboard && !isPreMatch && !matchEnded && (
