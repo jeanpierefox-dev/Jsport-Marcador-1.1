@@ -3,18 +3,15 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Team } from "../types";
 
 // Safely retrieve API Key. 
-// Vite replaces process.env.API_KEY with the actual string value during build due to `define` in vite.config.ts
-const getApiKey = () => {
+// Vite replaces process.env.API_KEY with the actual string value during build.
+// We use a simplified check to ensure the build replacement works correctly.
+const getApiKey = (): string => {
   try {
     // @ts-ignore
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-      // @ts-ignore
-      return process.env.API_KEY;
-    }
+    return process.env.API_KEY || '';
   } catch (e) {
-    // Ignore error
+    return '';
   }
-  return '';
 };
 
 const apiKey = getApiKey();
