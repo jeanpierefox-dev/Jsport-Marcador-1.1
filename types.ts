@@ -125,6 +125,7 @@ export interface LiveMatchState {
   
   // Remote Control State for TV Overlay
   displayMode?: {
+    showMiniScore: boolean;      // Top Left Bug
     showFullScoreboard: boolean; // Bottom Bar
     showCourtA: boolean;         // Visual Rotation A
     showCourtB: boolean;         // Visual Rotation B

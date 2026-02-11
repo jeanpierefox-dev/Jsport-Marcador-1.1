@@ -15,8 +15,20 @@ interface TVOverlayProps {
   onEndMatch?: () => void; 
   nextSetCountdown?: number | null;
   tournamentStats?: any[];
+  showStatsOverlay?: boolean;
+  showScoreboard?: boolean;
+  showMiniScore?: boolean;
   isCloudConnected?: boolean;
 }
+
+// Simplified VNL Style Logo
+const VNLLogo = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="45" fill="#001b3d" stroke="#b4a968" strokeWidth="2"/>
+        <path d="M50 10 L50 90 M20 30 L80 30 M20 70 L80 70" stroke="#b4a968" strokeWidth="1" fill="none" opacity="0.3"/>
+        <text x="50" y="55" fontSize="28" fontWeight="900" fill="white" textAnchor="middle" fontStyle="italic" letterSpacing="-1">VNL</text>
+    </svg>
+);
 
 // --- NEW VISUAL COURT ROTATION COMPONENT ---
 const TVCourtRotation = ({ players, teamName, isLeft }: { players: Player[], teamName: string, isLeft: boolean }) => {
@@ -129,6 +141,9 @@ export const TVOverlay: React.FC<TVOverlayProps> = ({
   onEndMatch,
   nextSetCountdown,
   tournamentStats,
+  showStatsOverlay = false,
+  showScoreboard = true, 
+  showMiniScore = true,
   isCloudConnected = true
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -136,11 +151,15 @@ export const TVOverlay: React.FC<TVOverlayProps> = ({
   
   // Safe Default for Display Mode to prevent crash
   const defaultDisplayMode = {
+    showMiniScore: true,
     showFullScoreboard: true,
+    showRotationA: false,
+    showRotationB: false,
     showCourtA: false,
     showCourtB: false,
     showMvp: false,
-    showTeamStats: false
+    showTeamStats: false,
+    showStats: false
   };
   const displayMode = match.displayMode || defaultDisplayMode;
 
@@ -265,57 +284,98 @@ export const TVOverlay: React.FC<TVOverlayProps> = ({
           ✕
       </button>
 
-      {/* --- COMPACT VNL BOTTOM BAR (Full Scoreboard) --- */}
+      {/* --- VNL SCORE BUG (TOP LEFT) --- */}
+      {displayMode.showMiniScore && !isPreMatch && (
+          <div className="absolute top-6 left-6 z-40 flex items-stretch animate-in slide-in-from-left-4 drop-shadow-2xl">
+              {/* Tournament/Logo Box */}
+              <div className="bg-[#001b3d] w-14 flex items-center justify-center border-r border-[#ffffff20] rounded-l-md">
+                  {tournament?.logoUrl ? <img src={tournament.logoUrl} className="h-8 w-8 object-contain" /> : <VNLLogo className="h-10 w-10" />}
+              </div>
+              
+              {/* Main Score Area */}
+              <div className="flex bg-[#041e42]/95 backdrop-blur text-white h-14">
+                  {/* Team A */}
+                  <div className="px-4 flex items-center gap-3 border-r border-white/10 min-w-[120px] justify-between relative overflow-hidden group">
+                      {match.servingTeamId === teamA.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ffca05] animate-pulse"></div>}
+                      <span className="text-lg font-black uppercase tracking-tighter italic">{teamA.name.substring(0,3)}</span>
+                      <div className="flex flex-col items-end">
+                          <span className={`text-3xl font-black leading-none ${match.servingTeamId === teamA.id ? 'text-[#ffca05]' : 'text-white'}`}>{match.scoreA}</span>
+                          <div className="flex gap-0.5 mt-0.5">
+                              {Array.from({length: winsA}).map((_,i) => <div key={i} className="w-1.5 h-1.5 bg-[#ffca05] rounded-full"></div>)}
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Set Indicator */}
+                  <div className="w-16 flex flex-col items-center justify-center bg-[#000d26] border-x border-[#ffffff10]">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">SET</span>
+                      <span className="text-xl font-black text-[#00b5e2]">{match.currentSet}</span>
+                  </div>
+
+                  {/* Team B */}
+                  <div className="px-4 flex items-center gap-3 border-l border-white/10 min-w-[120px] justify-between flex-row-reverse relative overflow-hidden">
+                      {match.servingTeamId === teamB.id && <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#ffca05] animate-pulse"></div>}
+                      <span className="text-lg font-black uppercase tracking-tighter italic">{teamB.name.substring(0,3)}</span>
+                      <div className="flex flex-col items-start">
+                          <span className={`text-3xl font-black leading-none ${match.servingTeamId === teamB.id ? 'text-[#ffca05]' : 'text-white'}`}>{match.scoreB}</span>
+                          <div className="flex gap-0.5 mt-0.5">
+                              {Array.from({length: winsB}).map((_,i) => <div key={i} className="w-1.5 h-1.5 bg-[#ffca05] rounded-full"></div>)}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div className="w-1 bg-[#b4a968] rounded-r-md"></div>
+          </div>
+      )}
+
+      {/* --- VNL BOTTOM BAR (Full Scoreboard) --- */}
       {displayMode.showFullScoreboard && !isPreMatch && !matchEnded && (
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-40 w-full max-w-4xl animate-in slide-in-from-bottom-6 duration-700 px-4">
-              <div className="flex h-12 bg-gradient-to-r from-[#001b3d] via-[#041e42] to-[#001b3d] border-t-2 border-[#b4a968] shadow-[0_10px_40px_rgba(0,0,0,0.6)] relative overflow-hidden rounded-b-lg clip-path-polygon">
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-40 w-full max-w-5xl animate-in slide-in-from-bottom-6 duration-700 px-4">
+              <div className="flex h-16 bg-gradient-to-r from-[#001b3d] via-[#041e42] to-[#001b3d] border-t-2 border-[#b4a968] shadow-[0_10px_40px_rgba(0,0,0,0.6)] relative overflow-hidden rounded-b-xl clip-path-polygon">
                   
                   {/* Left Team Panel */}
-                  <div className="flex-1 flex items-center justify-between px-6 relative">
-                      <div className="flex items-center gap-3 z-10">
-                          <div className="w-8 h-8 bg-white rounded p-0.5 shadow-lg transform -skew-x-12 border border-[#001b3d]">
-                              {teamA.logoUrl ? <img src={teamA.logoUrl} className="w-full h-full object-contain skew-x-12" /> : <div className="w-full h-full flex items-center justify-center font-black text-[#001b3d] skew-x-12 text-xs">{teamA.name[0]}</div>}
+                  <div className="flex-1 flex items-center justify-between px-8 relative">
+                      <div className="flex items-center gap-4 z-10">
+                          <div className="w-10 h-10 bg-white rounded p-1 shadow-lg transform -skew-x-12 border border-[#001b3d]">
+                              {teamA.logoUrl ? <img src={teamA.logoUrl} className="w-full h-full object-contain skew-x-12" /> : <div className="w-full h-full flex items-center justify-center font-black text-[#001b3d] skew-x-12">{teamA.name[0]}</div>}
                           </div>
                           <div className="flex flex-col">
-                              <span className="text-lg font-black text-white uppercase tracking-tighter italic leading-none filter drop-shadow-md">{teamA.name}</span>
-                              <div className="flex gap-1 mt-0.5">
+                              <span className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none filter drop-shadow-md">{teamA.name}</span>
+                              <div className="flex gap-1 mt-1">
                                   {Array.from({length: Math.ceil(match.config.maxSets/2)}).map((_, i) => (
-                                      <div key={i} className={`w-3 h-1 skew-x-[-12deg] ${i < winsA ? 'bg-[#ffca05]' : 'bg-white/20'}`}></div>
+                                      <div key={i} className={`w-4 h-1.5 skew-x-[-12deg] ${i < winsA ? 'bg-[#ffca05]' : 'bg-white/20'}`}></div>
                                   ))}
                               </div>
                           </div>
                       </div>
-                      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/40 to-transparent"></div>
+                      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black/40 to-transparent"></div>
                   </div>
 
                   {/* Center Score Diamond */}
-                  <div className="w-36 flex items-center justify-center bg-black relative transform -skew-x-12 border-x-2 border-[#b4a968] z-20 shadow-2xl">
-                      <div className="transform skew-x-12 flex items-center justify-center gap-4">
-                          <span className={`text-3xl font-black ${match.servingTeamId === teamA.id ? 'text-[#ffca05] drop-shadow-[0_0_10px_rgba(255,202,5,0.5)]' : 'text-white'}`}>{match.scoreA}</span>
-                          <div className="flex flex-col items-center leading-none">
-                              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">SET</span>
-                              <span className="text-lg font-black text-[#00b5e2] opacity-90">{match.currentSet}</span>
-                          </div>
-                          <span className={`text-3xl font-black ${match.servingTeamId === teamB.id ? 'text-[#ffca05] drop-shadow-[0_0_10px_rgba(255,202,5,0.5)]' : 'text-white'}`}>{match.scoreB}</span>
+                  <div className="w-48 flex items-center justify-center bg-black relative transform -skew-x-12 border-x-2 border-[#b4a968] z-20 shadow-2xl">
+                      <div className="transform skew-x-12 flex items-center justify-center gap-6">
+                          <span className={`text-5xl font-black ${match.servingTeamId === teamA.id ? 'text-[#ffca05] drop-shadow-[0_0_10px_rgba(255,202,5,0.5)]' : 'text-white'}`}>{match.scoreA}</span>
+                          <span className="text-lg font-black text-[#00b5e2] opacity-80">SET {match.currentSet}</span>
+                          <span className={`text-5xl font-black ${match.servingTeamId === teamB.id ? 'text-[#ffca05] drop-shadow-[0_0_10px_rgba(255,202,5,0.5)]' : 'text-white'}`}>{match.scoreB}</span>
                       </div>
                   </div>
 
                   {/* Right Team Panel */}
-                  <div className="flex-1 flex items-center justify-between px-6 flex-row-reverse relative">
-                      <div className="flex items-center gap-3 z-10 flex-row-reverse">
-                          <div className="w-8 h-8 bg-white rounded p-0.5 shadow-lg transform -skew-x-12 border border-[#001b3d]">
-                              {teamB.logoUrl ? <img src={teamB.logoUrl} className="w-full h-full object-contain skew-x-12" /> : <div className="w-full h-full flex items-center justify-center font-black text-[#001b3d] skew-x-12 text-xs">{teamB.name[0]}</div>}
+                  <div className="flex-1 flex items-center justify-between px-8 flex-row-reverse relative">
+                      <div className="flex items-center gap-4 z-10 flex-row-reverse">
+                          <div className="w-10 h-10 bg-white rounded p-1 shadow-lg transform -skew-x-12 border border-[#001b3d]">
+                              {teamB.logoUrl ? <img src={teamB.logoUrl} className="w-full h-full object-contain skew-x-12" /> : <div className="w-full h-full flex items-center justify-center font-black text-[#001b3d] skew-x-12">{teamB.name[0]}</div>}
                           </div>
                           <div className="flex flex-col items-end">
-                              <span className="text-lg font-black text-white uppercase tracking-tighter italic leading-none filter drop-shadow-md">{teamB.name}</span>
-                              <div className="flex gap-1 mt-0.5 flex-row-reverse">
+                              <span className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none filter drop-shadow-md">{teamB.name}</span>
+                              <div className="flex gap-1 mt-1 flex-row-reverse">
                                   {Array.from({length: Math.ceil(match.config.maxSets/2)}).map((_, i) => (
-                                      <div key={i} className={`w-3 h-1 skew-x-[12deg] ${i < winsB ? 'bg-[#ffca05]' : 'bg-white/20'}`}></div>
+                                      <div key={i} className={`w-4 h-1.5 skew-x-[12deg] ${i < winsB ? 'bg-[#ffca05]' : 'bg-white/20'}`}></div>
                                   ))}
                               </div>
                           </div>
                       </div>
-                      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/40 to-transparent"></div>
+                      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black/40 to-transparent"></div>
                   </div>
               </div>
           </div>

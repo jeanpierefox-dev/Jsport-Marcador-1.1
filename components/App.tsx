@@ -217,16 +217,21 @@ export const App: React.FC = () => {
           if (!prev) return null;
           // Set defaults if displayMode is undefined
           const currentMode = prev.displayMode || { 
+              showMiniScore: true, 
               showFullScoreboard: true, 
+              showRotationA: false, // Legacy
+              showRotationB: false, // Legacy
               showCourtA: false, 
               showCourtB: false,
               showMvp: false, 
-              showTeamStats: false
+              showTeamStats: false, 
+              showStats: false 
           };
           
           const newState = { ...currentMode, [key]: !currentMode[key] };
 
-          // Logic to ensure clean screen
+          // Logic to ensure clean screen: if showing full stats, maybe hide others? 
+          // For now, allow overlap, but rotation usually hides other rotations.
           if (key === 'showCourtA' && newState.showCourtA) newState.showCourtB = false;
           if (key === 'showCourtB' && newState.showCourtB) newState.showCourtA = false;
 
@@ -1383,13 +1388,19 @@ export const App: React.FC = () => {
             {currentUser?.role === 'ADMIN' && liveMatch.status !== 'finished' && (
                 <div className="mb-6 flex justify-between items-center bg-black/40 border border-white/10 p-2 rounded-xl sticky top-[8.5rem] z-30 backdrop-blur-sm overflow-x-auto">
                     <div className="flex gap-2 w-full min-w-max">
-                        {/* Score Controls - BUG Removed */}
+                        {/* Score Controls */}
                         <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                            <button 
+                                onClick={() => toggleDisplayMode('showMiniScore')}
+                                className={`px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest transition flex flex-col items-center gap-1 border ${liveMatch.displayMode?.showMiniScore ? 'bg-corp-accent text-white border-corp-accent' : 'bg-transparent text-slate-400 border-transparent hover:bg-white/10'}`}
+                            >
+                                BUG
+                            </button>
                             <button 
                                 onClick={() => toggleDisplayMode('showFullScoreboard')}
                                 className={`px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest transition flex flex-col items-center gap-1 border ${liveMatch.displayMode?.showFullScoreboard ? 'bg-corp-accent text-white border-corp-accent' : 'bg-transparent text-slate-400 border-transparent hover:bg-white/10'}`}
                             >
-                                SCOREBAR
+                                BAR
                             </button>
                         </div>
 
@@ -1882,6 +1893,7 @@ export const App: React.FC = () => {
                           </div>
                       </div>
 
+                      {/* Match Days */}
                       <div>
                           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Días de Partido</label>
                           <div className="flex flex-wrap gap-2">
@@ -1903,7 +1915,7 @@ export const App: React.FC = () => {
                       <button onClick={() => setShowCreateTourneyModal(false)} className="px-4 py-2 text-slate-400 hover:text-white font-bold uppercase text-xs">Cancelar</button>
                       <button 
                         onClick={handleCreateTournament} 
-                        disabled={loading || registeredTeams.length < 2}
+                        disabled={loading}
                         className="px-6 py-2 bg-corp-accent text-white rounded font-bold uppercase text-xs hover:bg-corp-accent-hover shadow-lg transition disabled:opacity-50 disabled:grayscale flex items-center gap-2"
                       >
                           {loading ? <span className="animate-spin">⏳</span> : '✨'} {loading ? 'Generando...' : 'Crear Torneo'}
