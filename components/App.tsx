@@ -62,10 +62,6 @@ export const App: React.FC = () => {
   
   // UI States
   const [tvMode, setTvMode] = useState(false);
-  const [showStatsOnTV, setShowStatsOnTV] = useState(false); 
-  const [showScoreboardOnTV, setShowScoreboardOnTV] = useState(true); 
-  const [showMiniBug, setShowMiniBug] = useState(true);
-  const [showFullScoreboard, setShowFullScoreboard] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(false);
   const [editingTourneyName, setEditingTourneyName] = useState(false);
@@ -212,6 +208,32 @@ export const App: React.FC = () => {
           const newVal = update instanceof Function ? update(prev) : update;
           if (isCloudConnected) pushData('liveMatch', newVal);
           return newVal;
+      });
+  };
+
+  // --- TOGGLE TV GRAPHICS REMOTELY ---
+  const toggleDisplayMode = (key: keyof NonNullable<LiveMatchState['displayMode']>) => {
+      updateLiveMatch(prev => {
+          if (!prev) return null;
+          // Set defaults if displayMode is undefined
+          const currentMode = prev.displayMode || { 
+              showFullScoreboard: true, 
+              showCourtA: false, 
+              showCourtB: false,
+              showMvp: false, 
+              showTeamStats: false
+          };
+          
+          const newState = { ...currentMode, [key]: !currentMode[key] };
+
+          // Logic to ensure clean screen
+          if (key === 'showCourtA' && newState.showCourtA) newState.showCourtB = false;
+          if (key === 'showCourtB' && newState.showCourtB) newState.showCourtA = false;
+
+          return {
+              ...prev,
+              displayMode: newState
+          };
       });
   };
   
@@ -1054,9 +1076,6 @@ export const App: React.FC = () => {
                     onNextSet={handleStartNextSet} 
                     nextSetCountdown={nextSetCountdown} 
                     tournamentStats={getMatchStats()} 
-                    showStatsOverlay={showStatsOnTV} 
-                    showScoreboard={showFullScoreboard} 
-                    showMiniScore={showMiniBug}
                     isCloudConnected={isCloudConnected} 
                     onEndMatch={handleEndBroadcast}
                   />;
@@ -1251,117 +1270,83 @@ export const App: React.FC = () => {
       {currentView === 'fixture' && activeTournament && (
           <div className="space-y-6">
               <h2 className="text-2xl font-bold text-white tracking-tight mb-8">Calendario y Resultados</h2>
-              <div className="space-y-8">
-                  {(() => {
-                      const groupedFixtures: Record<string, MatchFixture[]> = {};
-                      const sortedFixtures = [...(activeTournament.fixtures || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              <div className="space-y-4">
+                  {[...(activeTournament.fixtures || [])].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((fixture) => {
+                      const teamA = activeTournament.teams?.find(t => t.id === fixture.teamAId);
+                      const teamB = activeTournament.teams?.find(t => t.id === fixture.teamBId);
+                      if (!teamA || !teamB) return null;
+                      const isLive = fixture.status === 'live';
                       
-                      sortedFixtures.forEach(fix => {
-                          if (!groupedFixtures[fix.date]) {
-                              groupedFixtures[fix.date] = [];
-                          }
-                          groupedFixtures[fix.date].push(fix);
-                      });
+                      return (
+                          <div key={fixture.id} className={`flex flex-col md:flex-row bg-corp-panel border ${isLive ? 'border-red-500/50 shadow-lg shadow-red-500/10' : 'border-white/5 hover:border-white/20'} rounded-xl transition overflow-hidden group`}>
+                              <div className={`md:w-32 flex flex-col items-center justify-center p-4 border-b md:border-b-0 md:border-r border-white/5 ${isLive ? 'bg-red-900/10' : 'bg-black/10'}`}>
+                                  <span className="text-xs font-bold text-slate-400 uppercase">{fixture.group}</span>
+                                  {currentUser.role === 'ADMIN' ? (
+                                      <input type="date" value={fixture.date} onChange={(e) => handleUpdateFixtureDate(fixture.id, e.target.value)} className="bg-transparent text-white font-bold text-xs mt-1 text-center outline-none" />
+                                  ) : <span className="text-white font-bold text-sm mt-1">{fixture.date}</span>}
+                                  {isLive && <span className="mt-2 bg-red-600 text-white text-[10px] px-2 py-0.5 font-bold uppercase rounded-full animate-pulse">LIVE</span>}
+                              </div>
 
-                      const getFormattedDateTitle = (dateStr: string) => {
-                          if (!dateStr) return 'Fecha desconocida';
-                          const [year, month, day] = dateStr.split('-').map(Number);
-                          const date = new Date(year, month - 1, day);
-                          const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                          const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                          return `${days[date.getDay()]} ${day} de ${months[date.getMonth()]}`;
-                      };
-
-                      return Object.entries(groupedFixtures).map(([date, matches]) => {
-                          return (
-                              <div key={date} className="animate-in fade-in slide-in-from-bottom-2">
-                                  <h3 className="text-lg font-bold text-vnl-accent uppercase tracking-widest border-b border-white/10 pb-2 mb-4 sticky top-14 bg-corp-bg/95 backdrop-blur z-20 py-2 pl-2">
-                                      {getFormattedDateTitle(date)}
-                                  </h3>
-                                  <div className="space-y-4">
-                                      {matches.map((fixture) => {
-                                          const teamA = activeTournament.teams?.find(t => t.id === fixture.teamAId);
-                                          const teamB = activeTournament.teams?.find(t => t.id === fixture.teamBId);
-                                          if (!teamA || !teamB) return null;
-                                          const isLive = fixture.status === 'live';
-                                          
-                                          return (
-                                              <div key={fixture.id} className={`flex flex-col md:flex-row bg-corp-panel border ${isLive ? 'border-red-500/50 shadow-lg shadow-red-500/10' : 'border-white/5 hover:border-white/20'} rounded-xl transition overflow-hidden group`}>
-                                                  <div className={`md:w-32 flex flex-col items-center justify-center p-4 border-b md:border-b-0 md:border-r border-white/5 ${isLive ? 'bg-red-900/10' : 'bg-black/10'}`}>
-                                                      <span className="text-xs font-bold text-slate-400 uppercase">{fixture.group}</span>
-                                                      {currentUser.role === 'ADMIN' ? (
-                                                          <input type="date" value={fixture.date} onChange={(e) => handleUpdateFixtureDate(fixture.id, e.target.value)} className="bg-transparent text-white font-bold text-xs mt-1 text-center outline-none" />
-                                                      ) : <span className="hidden">{fixture.date}</span>}
-                                                      {isLive ? <span className="mt-1 bg-red-600 text-white text-[10px] px-2 py-0.5 font-bold uppercase rounded-full animate-pulse">LIVE</span> : <span className="text-slate-500 text-[10px] uppercase font-bold mt-1">Match</span>}
-                                                  </div>
-
-                                                  <div className="flex-1 flex items-center justify-between p-4 md:px-8 relative">
-                                                      <div className="flex items-center gap-4 flex-1 justify-end">
-                                                          <span className="text-lg md:text-xl font-bold text-white text-right">{teamA.name}</span>
-                                                          {teamA.logoUrl && <img src={teamA.logoUrl} className="w-10 h-10 object-contain bg-white rounded-full p-1" />}
-                                                      </div>
-                                                      <div className="px-6 flex flex-col items-center">
-                                                          {fixture.status === 'finished' ? (
-                                                              <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                                                                  <span className="text-2xl font-bold text-yellow-400 tracking-wider">{fixture.resultString}</span>
-                                                              </div>
-                                                          ) : <span className="text-sm font-bold text-slate-500 uppercase">VS</span>}
-                                                      </div>
-                                                      <div className="flex items-center gap-4 flex-1">
-                                                          {teamB.logoUrl && <img src={teamB.logoUrl} className="w-10 h-10 object-contain bg-white rounded-full p-1" />}
-                                                          <span className="text-lg md:text-xl font-bold text-white">{teamB.name}</span>
-                                                      </div>
-                                                  </div>
-
-                                                  <div className="md:w-40 flex items-center justify-center p-4 bg-black/10 border-t md:border-t-0 md:border-l border-white/5 gap-2">
-                                                      {isLive ? (
-                                                          <div className="flex flex-col gap-2 w-full">
-                                                              <button onClick={() => handleInitiateMatch(fixture.id, 'control')} className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-full font-bold text-xs shadow-lg transition transform hover:scale-105 w-full flex items-center justify-center gap-2">
-                                                                  <span>🔴</span> Ver Ahora
-                                                              </button>
-                                                              {currentUser.role === 'ADMIN' && (
-                                                                  <button 
-                                                                    onClick={() => handleQuickFinish(fixture.id)} 
-                                                                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-wider transition w-full border border-white/10"
-                                                                  >
-                                                                      Finalizar
-                                                                  </button>
-                                                              )}
-                                                          </div>
-                                                      ) : fixture.status === 'finished' ? (
-                                                          <div className="flex flex-col items-center gap-2 w-full">
-                                                              <button onClick={() => handleInitiateMatch(fixture.id, 'control')} className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded-full font-bold text-xs w-full">
-                                                                  Ver Resultados
-                                                              </button>
-                                                              {currentUser.role === 'ADMIN' && (
-                                                                  <button onClick={() => handleResetMatch(fixture.id)} className="text-[10px] text-red-400 hover:text-white uppercase font-bold underline">Reiniciar</button>
-                                                              )}
-                                                          </div>
-                                                      ) : (
-                                                          <>
-                                                              <button onClick={() => handleInitiateMatch(fixture.id, 'control')} className="border border-white/20 hover:bg-white/5 text-white px-4 py-2 rounded-full font-bold text-xs transition">
-                                                                  {currentUser.role === 'ADMIN' ? 'Controlar' : 'Entrar'}
-                                                              </button>
-                                                              {currentUser.role === 'ADMIN' && (
-                                                                  <button 
-                                                                    onClick={() => handleInitiateMatch(fixture.id, 'preview')} 
-                                                                    className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition"
-                                                                    title="Transmitir Previa"
-                                                                  >
-                                                                      🎥
-                                                                  </button>
-                                                              )}
-                                                          </>
-                                                      )}
-                                                  </div>
-                                              </div>
-                                          );
-                                      })}
+                              <div className="flex-1 flex items-center justify-between p-4 md:px-8 relative">
+                                  <div className="flex items-center gap-4 flex-1 justify-end">
+                                      <span className="text-lg md:text-xl font-bold text-white text-right">{teamA.name}</span>
+                                      {teamA.logoUrl && <img src={teamA.logoUrl} className="w-10 h-10 object-contain bg-white rounded-full p-1" />}
+                                  </div>
+                                  <div className="px-6 flex flex-col items-center">
+                                      {fixture.status === 'finished' ? (
+                                          <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10">
+                                              <span className="text-2xl font-bold text-yellow-400 tracking-wider">{fixture.resultString}</span>
+                                          </div>
+                                      ) : <span className="text-sm font-bold text-slate-500 uppercase">VS</span>}
+                                  </div>
+                                  <div className="flex items-center gap-4 flex-1">
+                                      {teamB.logoUrl && <img src={teamB.logoUrl} className="w-10 h-10 object-contain bg-white rounded-full p-1" />}
+                                      <span className="text-lg md:text-xl font-bold text-white">{teamB.name}</span>
                                   </div>
                               </div>
-                          );
-                      });
-                  })()}
+
+                              <div className="md:w-40 flex items-center justify-center p-4 bg-black/10 border-t md:border-t-0 md:border-l border-white/5 gap-2">
+                                  {isLive ? (
+                                      <div className="flex flex-col gap-2 w-full">
+                                          <button onClick={() => handleInitiateMatch(fixture.id, 'control')} className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-full font-bold text-xs shadow-lg transition transform hover:scale-105 w-full flex items-center justify-center gap-2">
+                                              <span>🔴</span> Ver Ahora
+                                          </button>
+                                          {currentUser.role === 'ADMIN' && (
+                                              <button 
+                                                onClick={() => handleQuickFinish(fixture.id)} 
+                                                className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-wider transition w-full border border-white/10"
+                                              >
+                                                  Finalizar Live
+                                              </button>
+                                          )}
+                                      </div>
+                                  ) : fixture.status === 'finished' ? (
+                                      <div className="flex flex-col items-center gap-1">
+                                          <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Finalizado</span>
+                                          {currentUser.role === 'ADMIN' && (
+                                              <button onClick={() => handleResetMatch(fixture.id)} className="text-[10px] text-red-400 hover:text-white uppercase font-bold underline">Reiniciar</button>
+                                          )}
+                                      </div>
+                                  ) : (
+                                      <>
+                                          <button onClick={() => handleInitiateMatch(fixture.id, 'control')} className="border border-white/20 hover:bg-white/5 text-white px-4 py-2 rounded-full font-bold text-xs transition">
+                                              {currentUser.role === 'ADMIN' ? 'Controlar' : 'Entrar'}
+                                          </button>
+                                          {currentUser.role === 'ADMIN' && (
+                                              <button 
+                                                onClick={() => handleInitiateMatch(fixture.id, 'preview')} 
+                                                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition"
+                                                title="Transmitir Previa"
+                                              >
+                                                  🎥
+                                              </button>
+                                          )}
+                                      </>
+                                  )}
+                              </div>
+                          </div>
+                      );
+                  })}
               </div>
           </div>
       )}
@@ -1369,8 +1354,8 @@ export const App: React.FC = () => {
       {/* --- MATCH VIEW --- */}
       {currentView === 'match' && liveMatch && activeTournament && (
         <div className="max-w-7xl mx-auto pb-20">
-            {/* MATCH HEADER - SIMPLIFIED */}
-            <div className="flex justify-between items-center mb-6 bg-corp-panel/80 border border-white/10 p-4 shadow-lg rounded-xl sticky top-14 z-30 backdrop-blur-md">
+            {/* MATCH HEADER */}
+            <div className="mb-2 bg-corp-panel/80 border border-white/10 p-4 shadow-lg rounded-xl sticky top-20 z-40 backdrop-blur-md flex justify-between items-center">
                 <div className="flex items-center gap-4 w-full justify-between">
                     <div className="flex items-center gap-4">
                         {liveMatch.status === 'finished' ? (
@@ -1393,6 +1378,68 @@ export const App: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* TV GRAPHICS CONTROLS (Updated) */}
+            {currentUser?.role === 'ADMIN' && liveMatch.status !== 'finished' && (
+                <div className="mb-6 flex justify-between items-center bg-black/40 border border-white/10 p-2 rounded-xl sticky top-[8.5rem] z-30 backdrop-blur-sm overflow-x-auto">
+                    <div className="flex gap-2 w-full min-w-max">
+                        {/* Score Controls - BUG Removed */}
+                        <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                            <button 
+                                onClick={() => toggleDisplayMode('showFullScoreboard')}
+                                className={`px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest transition flex flex-col items-center gap-1 border ${liveMatch.displayMode?.showFullScoreboard ? 'bg-corp-accent text-white border-corp-accent' : 'bg-transparent text-slate-400 border-transparent hover:bg-white/10'}`}
+                            >
+                                SCOREBAR
+                            </button>
+                        </div>
+
+                        {/* Visual Rotation Controls */}
+                        <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                            <button 
+                                onClick={() => toggleDisplayMode('showCourtA')}
+                                className={`px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest transition flex flex-col items-center gap-1 border ${liveMatch.displayMode?.showCourtA ? 'bg-vnl-accent text-black border-vnl-accent' : 'bg-transparent text-slate-400 border-transparent hover:bg-white/10'}`}
+                            >
+                                ROT A
+                            </button>
+                            <button 
+                                onClick={() => toggleDisplayMode('showCourtB')}
+                                className={`px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest transition flex flex-col items-center gap-1 border ${liveMatch.displayMode?.showCourtB ? 'bg-vnl-accent text-black border-vnl-accent' : 'bg-transparent text-slate-400 border-transparent hover:bg-white/10'}`}
+                            >
+                                ROT B
+                            </button>
+                        </div>
+
+                        {/* Stats Controls */}
+                        <button 
+                            onClick={() => toggleDisplayMode('showTeamStats')}
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition flex flex-col items-center justify-center gap-1 border ${liveMatch.displayMode?.showTeamStats ? 'bg-blue-600 text-white border-blue-600' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                        >
+                            STATS
+                        </button>
+                        
+                        <button 
+                            onClick={() => toggleDisplayMode('showMvp')}
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition flex flex-col items-center justify-center gap-1 border ${liveMatch.displayMode?.showMvp ? 'bg-yellow-500 text-black border-yellow-500' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                        >
+                            MVP
+                        </button>
+                        
+                        <div className="w-px bg-white/10 mx-1"></div>
+
+                        <button onClick={openEditRules} className="bg-white/5 text-slate-300 px-4 rounded-lg font-bold text-xs uppercase hover:bg-white/10 transition border border-white/10 flex flex-col items-center justify-center">
+                            ⚙️
+                        </button>
+
+                        <button onClick={handleEndBroadcast} className="bg-red-600 hover:bg-red-500 text-white border border-red-500/30 px-4 rounded-lg font-bold text-[10px] uppercase transition shadow-lg flex flex-col items-center justify-center">
+                            🏁 FIN
+                        </button>
+
+                        <button onClick={() => setCurrentView('fixture')} className="bg-white/5 text-slate-400 px-4 rounded-lg font-bold text-[10px] uppercase hover:text-white transition border border-white/10 flex flex-col items-center justify-center">
+                            ✕ SALIR
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Set Management Panel - Admin Only - Only if match is active */}
             {currentUser?.role === 'ADMIN' && liveMatch.status !== 'finished' && (
@@ -1629,55 +1676,9 @@ export const App: React.FC = () => {
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Control General</h3>
                 
                 <div className="flex flex-wrap items-center gap-4">
-                   {(currentUser?.role === 'ADMIN' && liveMatch.status !== 'finished') && (
-                       <>
-                           <div className="flex items-center gap-2 bg-black/20 p-2 rounded-lg border border-white/5">
-                               <span className="text-[10px] font-bold text-slate-500 uppercase px-2">Gráficos TV:</span>
-                               {/* Score Controls */}
-                               <div className="flex gap-1">
-                                   <button onClick={() => setShowMiniBug(!showMiniBug)} className={`px-3 py-2 rounded font-bold text-xs uppercase transition border ${showMiniBug ? 'bg-corp-accent text-white border-corp-accent' : 'bg-transparent text-slate-400 border-white/10 hover:text-white'}`}>Bug</button>
-                                   <button onClick={() => setShowFullScoreboard(!showFullScoreboard)} className={`px-3 py-2 rounded font-bold text-xs uppercase transition border ${showFullScoreboard ? 'bg-corp-accent text-white border-corp-accent' : 'bg-transparent text-slate-400 border-white/10 hover:text-white'}`}>Bar</button>
-                               </div>
-                               <button onClick={() => setShowStatsOnTV(!showStatsOnTV)} className={`px-3 py-2 rounded font-bold text-xs uppercase transition border ${showStatsOnTV ? 'bg-corp-accent text-white border-corp-accent' : 'bg-transparent text-slate-400 border-white/10 hover:text-white'}`}>Stats</button>
-                           </div>
-
-                           <div className="w-px h-10 bg-white/10 mx-2 hidden md:block"></div>
-
-                           <button onClick={openEditRules} className="bg-white/5 text-slate-300 px-4 py-3 rounded-lg font-bold text-xs uppercase hover:bg-white/10 hover:text-white transition flex items-center gap-2 border border-white/10">
-                               <span>⚙️</span> Reglas
-                           </button>
-                           
-                           {liveMatch.status === 'finished' && (
-                               <button 
-                                   onClick={() => setViewingSetStats({setNum: liveMatch.currentSet, data: liveMatch.sets[liveMatch.sets.length-1]})}
-                                   className="bg-blue-600 hover:bg-blue-500 text-white border border-blue-500/30 px-4 py-3 rounded-lg font-bold text-xs uppercase transition shadow-lg flex items-center gap-2"
-                               >
-                                   <span>📊</span> Resultados
-                               </button>
-                           )}
-
-                           <button onClick={handleEndBroadcast} className="bg-red-600 hover:bg-red-500 text-white border border-red-500/30 px-6 py-3 rounded-lg font-bold text-xs uppercase transition shadow-lg shadow-red-900/20 flex items-center gap-2 ml-auto">
-                               <span>🏁</span> Finalizar Transmisión
-                           </button>
-                       </>
-                   )}
-
-                   {/* Controls for Finished Matches */}
-                   {liveMatch.status === 'finished' && (
-                       <button 
-                           onClick={() => setViewingSetStats({setNum: liveMatch.sets.length, data: liveMatch.sets[liveMatch.sets.length - 1]})}
-                           className="bg-corp-accent hover:bg-corp-accent-hover text-white px-6 py-3 rounded-lg font-bold text-xs uppercase transition shadow-lg flex items-center gap-2"
-                       >
-                           <span>📊</span> Ver Estadísticas del Último Set
-                       </button>
-                   )}
-                   
-                   <div className={`flex gap-2 ${isAdmin && liveMatch.status !== 'finished' ? '' : 'ml-auto'}`}>
+                   <div className={`flex gap-2 ml-auto`}>
                        <button onClick={() => setTvMode(true)} className="bg-corp-accent text-white px-6 py-3 rounded-lg font-bold text-xs uppercase hover:bg-corp-accent-hover transition flex items-center gap-2 shadow-lg">
                             <span>📺</span> TV Mode
-                       </button>
-                       <button onClick={() => setCurrentView('fixture')} className="border border-white/20 text-slate-400 px-6 py-3 rounded-lg font-bold text-xs uppercase hover:text-white hover:bg-white/5 transition">
-                            Salir
                        </button>
                    </div>
                 </div>
@@ -1685,61 +1686,18 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* ... Modals (SetStats, Rotation, MatchConfig, CreateTourney) ... */}
-      
-      {showMatchConfigModal && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[70] backdrop-blur-md">
-              <div className="bg-corp-panel p-6 border border-white/20 rounded-xl w-full max-w-sm shadow-2xl">
-                  {/* ... match config modal content ... */}
-                  <h3 className="text-xl font-bold text-white mb-6 uppercase italic text-center">
-                      {isEditingRules ? 'Modificar Reglas' : 'Configurar Partido'}
-                  </h3>
-                  
-                  <div className="space-y-6 mb-8">
-                      {/* ... Match Config Inputs ... */}
-                      <div>
-                          <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Cantidad de Sets</label>
-                          <div className="flex gap-2 mb-2">
-                              <input 
-                                type="number" 
-                                value={matchConfig.maxSets}
-                                onChange={(e) => setMatchConfig({...matchConfig, maxSets: parseInt(e.target.value) || 0})}
-                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white font-bold text-center outline-none focus:border-corp-accent"
-                              />
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                              {[1, 3, 5].map(sets => (
-                                  <button 
-                                    key={sets} 
-                                    onClick={() => setMatchConfig({...matchConfig, maxSets: sets})}
-                                    className={`py-1 rounded text-xs font-bold transition ${matchConfig.maxSets === sets ? 'bg-corp-accent text-white' : 'bg-black/30 text-slate-500 hover:text-white'}`}
-                                  >
-                                      {sets}
-                                  </button>
-                              ))}
-                          </div>
-                      </div>
-                      
-                      {/* ... other config inputs ... */}
-                  </div>
-
-                  <div className="flex gap-3">
-                      <button onClick={() => { setShowMatchConfigModal(null); setIsEditingRules(false); }} className="flex-1 py-3 text-slate-400 hover:text-white font-bold uppercase text-xs">Cancelar</button>
-                      <button onClick={handleSaveConfig} className="flex-1 py-3 bg-green-600 text-white rounded font-bold uppercase text-xs hover:bg-green-500 shadow-lg transition">
-                          {isEditingRules ? 'Guardar Cambios' : 'Comenzar'}
-                      </button>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* ... Other Modals ... */}
+      {/* --- MODALS --- */}
+      {/* Set Stats Modal */}
       {viewingSetStats && activeTournament && (() => {
+          // Safe lookup logic
           const fixture = activeTournament.fixtures?.find(f => f.id === liveMatch?.matchId);
-          if (!fixture && !liveMatch) return null; 
+          if (!fixture && !liveMatch) return null; // Can't resolve teams if no live match context or fixture
+
           const teamA = activeTournament.teams?.find(t => t.id === fixture?.teamAId);
           const teamB = activeTournament.teams?.find(t => t.id === fixture?.teamBId);
+
           if (!teamA || !teamB) return null; 
+
           return (
             <SetStatsModal 
                 setNumber={viewingSetStats.setNum}
@@ -1749,7 +1707,7 @@ export const App: React.FC = () => {
                 onClose={() => setViewingSetStats(null)}
                 onNextSet={() => {
                     handleStartNextSet();
-                    setViewingSetStats(null); 
+                    setViewingSetStats(null); // Close modal when starting next set
                 }}
                 showNextButton={isAdmin && liveMatch.status === 'finished_set' && viewingSetStats.setNum === liveMatch.currentSet}
             />
@@ -1785,6 +1743,95 @@ export const App: React.FC = () => {
           </div>
       )}
 
+      {showMatchConfigModal && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[70] backdrop-blur-md">
+              <div className="bg-corp-panel p-6 border border-white/20 rounded-xl w-full max-w-sm shadow-2xl">
+                  {/* ... match config modal content ... */}
+                  <h3 className="text-xl font-bold text-white mb-6 uppercase italic text-center">
+                      {isEditingRules ? 'Modificar Reglas' : 'Configurar Partido'}
+                  </h3>
+                  
+                  <div className="space-y-6 mb-8">
+                      <div>
+                          <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Cantidad de Sets</label>
+                          <div className="flex gap-2 mb-2">
+                              <input 
+                                type="number" 
+                                value={matchConfig.maxSets}
+                                onChange={(e) => setMatchConfig({...matchConfig, maxSets: parseInt(e.target.value) || 0})}
+                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white font-bold text-center outline-none focus:border-corp-accent"
+                              />
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                              {[1, 3, 5].map(sets => (
+                                  <button 
+                                    key={sets} 
+                                    onClick={() => setMatchConfig({...matchConfig, maxSets: sets})}
+                                    className={`py-1 rounded text-xs font-bold transition ${matchConfig.maxSets === sets ? 'bg-corp-accent text-white' : 'bg-black/30 text-slate-500 hover:text-white'}`}
+                                  >
+                                      {sets}
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+
+                      <div>
+                          <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Puntos por Set</label>
+                          <div className="flex gap-2 mb-2">
+                              <input 
+                                type="number" 
+                                value={matchConfig.pointsPerSet}
+                                onChange={(e) => setMatchConfig({...matchConfig, pointsPerSet: parseInt(e.target.value) || 0})}
+                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white font-bold text-center outline-none focus:border-corp-accent"
+                              />
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                              {[15, 21, 25].map(pts => (
+                                  <button 
+                                    key={pts} 
+                                    onClick={() => setMatchConfig({...matchConfig, pointsPerSet: pts})}
+                                    className={`py-1 rounded text-xs font-bold transition ${matchConfig.pointsPerSet === pts ? 'bg-corp-accent text-white' : 'bg-black/30 text-slate-500 hover:text-white'}`}
+                                  >
+                                      {pts}
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+
+                      <div>
+                          <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tie-Break (Último Set)</label>
+                          <div className="flex gap-2 mb-2">
+                              <input 
+                                type="number" 
+                                value={matchConfig.tieBreakPoints}
+                                onChange={(e) => setMatchConfig({...matchConfig, tieBreakPoints: parseInt(e.target.value) || 0})}
+                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white font-bold text-center outline-none focus:border-corp-accent"
+                              />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                              {[15, 25].map(pts => (
+                                  <button 
+                                    key={pts} 
+                                    onClick={() => setMatchConfig({...matchConfig, tieBreakPoints: pts})}
+                                    className={`py-1 rounded text-xs font-bold transition ${matchConfig.tieBreakPoints === pts ? 'bg-corp-accent text-white' : 'bg-black/30 text-slate-500 hover:text-white'}`}
+                                  >
+                                      {pts}
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                      <button onClick={() => { setShowMatchConfigModal(null); setIsEditingRules(false); }} className="flex-1 py-3 text-slate-400 hover:text-white font-bold uppercase text-xs">Cancelar</button>
+                      <button onClick={handleSaveConfig} className="flex-1 py-3 bg-green-600 text-white rounded font-bold uppercase text-xs hover:bg-green-500 shadow-lg transition">
+                          {isEditingRules ? 'Guardar Cambios' : 'Comenzar'}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
       {showCreateTourneyModal && (
           <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] backdrop-blur-md p-4">
               <div className="bg-corp-panel border border-white/20 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
@@ -1795,12 +1842,6 @@ export const App: React.FC = () => {
                   </div>
                   
                   <div className="p-6 space-y-6 overflow-y-auto">
-                      {registeredTeams.length < 2 && (
-                          <div className="bg-red-500/10 border border-red-500/20 p-3 rounded text-red-300 text-xs font-bold text-center mb-4">
-                              ⚠️ Necesitas al menos 2 equipos registrados para crear un torneo.
-                          </div>
-                      )}
-                      
                       <div className="flex gap-4">
                           <div className="w-24 h-24 bg-black/30 rounded-lg flex-shrink-0 flex items-center justify-center border border-white/10 overflow-hidden relative group">
                               {newTourneyData.logoUrl ? <img src={newTourneyData.logoUrl} className="w-full h-full object-contain" /> : <span className="text-2xl">🏆</span>}
@@ -1819,7 +1860,7 @@ export const App: React.FC = () => {
                           </div>
                       </div>
 
-                      {/* Date Range & Match Days Inputs */}
+                      {/* Date Range */}
                       <div className="grid grid-cols-2 gap-4">
                           <div>
                               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Inicio</label>

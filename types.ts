@@ -107,7 +107,7 @@ export interface MatchConfig {
 export interface LiveMatchState {
   matchId: string;
   config: MatchConfig;
-  status: 'warmup' | 'playing' | 'paused' | 'finished_set' | 'finished'; // Added finished_set
+  status: 'warmup' | 'playing' | 'paused' | 'finished_set' | 'finished'; 
   currentSet: number;
   sets: MatchSet[];
   rotationA: Player[]; // 6 players on court
@@ -122,7 +122,15 @@ export interface LiveMatchState {
   substitutionsA: number; // Max 6 per set typically
   substitutionsB: number;
   requests: RequestItem[]; // Requests from coaches
-  showLeaderboard?: boolean;
+  
+  // Remote Control State for TV Overlay
+  displayMode?: {
+    showFullScoreboard: boolean; // Bottom Bar
+    showCourtA: boolean;         // Visual Rotation A
+    showCourtB: boolean;         // Visual Rotation B
+    showMvp: boolean;            // Player Card
+    showTeamStats: boolean;      // Team Comparison
+  };
 }
 
 export interface RequestItem {
